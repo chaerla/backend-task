@@ -1,0 +1,51 @@
+version: "3"
+
+services:
+  redis:
+    image: "redis:latest"
+    hostname: redis
+    restart: always
+    env_file: .env  # Load environment variables from .env file
+    networks:
+      - backend
+    ports:
+      - "${REDIS_PORT}:${REDIS_PORT}"  # Use REDIS_PORT from .env for mapping ports
+
+  zookeeper:
+    image: wurstmeister/zookeeper:latest
+    hostname: zookeeper
+    restart: always
+    networks:
+      - backend
+
+  kafka:
+    image: wurstmeister/kafka:latest
+    hostname: kafka
+    restart: always
+    ports:
+      - "${KAFKA_PORT}:${KAFKA_PORT}"
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: ${KAFKA_ADVERTISED_LISTENERS}
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: ${KAFKA_LISTENER_SECURITY_PROTOCOL_MAP}
+      KAFKA_LISTENERS: ${KAFKA_LISTENERS}
+      KAFKA_INTER_BROKER_LISTENER_NAME: ${KAFKA_INTER_BROKER_LISTENER_NAME}
+      KAFKA_ZOOKEEPER_CONNECT: ${KAFKA_ZOOKEEPER_CONNECT}
+    depends_on:
+      - zookeeper
+    networks:
+      - backend
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    hostname: jaeger
+    restart: always
+    ports:
+      - "${JAEGER_UI_PORT}:${JAEGER_UI_PORT}"
+      - "${JAEGER_PORT}:${JAEGER_PORT}"
+    environment:
+      COLLECTOR_ZIPKIN_HTTP_PORT: ${COLLECTOR_ZIPKIN_HTTP_PORT}
+    networks:
+      - backend
+
+networks:
+  backend:
